@@ -17,6 +17,6 @@ repositories {
    在app模块目录下的build.gradle文件添加
    ```
    dependencies {
-         compile 'com.github.sun141421:QRScanDialog:lastversion'
+         compile 'com.github.sun141421:QRScanDialog:{latest version}'
    }
    ```

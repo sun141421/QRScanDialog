@@ -1,7 +1,6 @@
 package com.bozhong.qrscandialog;
 
 import android.Manifest;
-import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
@@ -29,10 +28,14 @@ import com.dlazaro66.qrcodereaderview.QRCodeReaderView;
 
 /**
  * 二维码扫描对话框
+ * 使用{@link #show(FragmentManager, OnQRCodeReaded)}启动对话框
  * Created by lsc on 2017/9/9.
  */
 
+@SuppressWarnings("unused")
 public class QRScanDialogFragment extends DialogFragment {
+    private static final int REQUEST_CODE_CAMERA=2017;
+
     private FrameLayout rootView;
 
     private QRCodeReaderView qrCodeReaderView;
@@ -79,7 +82,7 @@ public class QRScanDialogFragment extends DialogFragment {
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         if (!hasCameraPermissionGranted()) {
-            requestPermissions(new String[]{Manifest.permission.CAMERA}, 2017);
+            requestPermissions(new String[]{Manifest.permission.CAMERA}, REQUEST_CODE_CAMERA);
         } else {
             setupQRCodeReaderView();
         }
@@ -95,7 +98,7 @@ public class QRScanDialogFragment extends DialogFragment {
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == 2017 && grantResults[0] == PermissionChecker.PERMISSION_GRANTED) {
+        if (requestCode == REQUEST_CODE_CAMERA && grantResults[0] == PermissionChecker.PERMISSION_GRANTED) {
             setupQRCodeReaderView();
         } else {
             setupNoPermissionView();
@@ -119,24 +122,10 @@ public class QRScanDialogFragment extends DialogFragment {
     /**
      * 打开本应用的详情页
      */
-    public static void openAppDetailSettings(Context context) {
+    private static void openAppDetailSettings(Context context) {
         Intent i = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
         i.setData(Uri.parse("package:" + context.getPackageName()));
-        if (!(context instanceof Activity)) {
-            i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        }
         context.startActivity(i);
-    }
-
-    private void setupCallback() {
-        qrCodeReaderView.setOnQRCodeReadListener(new QRCodeReaderView.OnQRCodeReadListener() {
-            @Override
-            public void onQRCodeRead(String text, PointF[] points) {
-                if (callback != null) {
-                    callback.onQRCodeReaded(QRScanDialogFragment.this, text);
-                }
-            }
-        });
     }
 
     @Override
@@ -152,7 +141,14 @@ public class QRScanDialogFragment extends DialogFragment {
     private void setupQRCodeReaderView() {
         qrCodeReaderView = new QRCodeReaderView(getContext());
         rootView.addView(qrCodeReaderView);
-        setupCallback();
+        qrCodeReaderView.setOnQRCodeReadListener(new QRCodeReaderView.OnQRCodeReadListener() {
+            @Override
+            public void onQRCodeRead(String text, PointF[] points) {
+                if (callback != null) {
+                    callback.onQRCodeReaded(QRScanDialogFragment.this, text);
+                }
+            }
+        });
         qrCodeReaderView.startCamera();
     }
 
@@ -167,6 +163,7 @@ public class QRScanDialogFragment extends DialogFragment {
 
     @SuppressWarnings("WeakerAccess")
     public interface OnQRCodeReaded {
+        /**扫描得到文本后的callback*/
         void onQRCodeReaded(QRScanDialogFragment dialog, String readedText);
     }
 }
