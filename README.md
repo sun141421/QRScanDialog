@@ -3,8 +3,7 @@
 QRScanDialog是一个简单的二维码扫描对话框，处理了动态权限。
 
 
-[![Release](https://jitpack.io/v/User/Repo.svg)]
-(https://jitpack.io/#sun141421/QRScanDialog)
+![Release](https://jitpack.io/v/sun141421/QRScanDialog.svg)
 
 #集成方法
 
