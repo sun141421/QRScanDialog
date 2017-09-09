@@ -20,6 +20,18 @@ repositories {
          compile 'com.github.sun141421:QRScanDialog:{latest version}'
    }
    ```
-# 内部使用的二维码扫描库
 
-## ![QRCodeReaderView](https://github.com/dlazaro66/QRCodeReaderView)
+# 使用方法
+   ```
+ QRScanDialogFragment.show(getSupportFragmentManager(), new QRScanDialogFragment.OnQRCodeReaded() {
+        @Override
+        public void onQRCodeReaded(QRScanDialogFragment dialog,String readedTxt) {
+           Toast.makeText(MainActivity.this, "二维码文字："+readedTxt, Toast.LENGTH_SHORT).show();
+           dialog.dismiss();
+        }
+    );
+   ```
+
+## 内部使用的二维码扫描库
+
+### ![QRCodeReaderView](https://github.com/dlazaro66/QRCodeReaderView)
