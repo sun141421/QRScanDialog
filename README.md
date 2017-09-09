@@ -20,3 +20,6 @@ repositories {
          compile 'com.github.sun141421:QRScanDialog:{latest version}'
    }
    ```
+# 内部使用的二维码扫描库
+
+## ![QRCodeReaderView](https://github.com/dlazaro66/QRCodeReaderView)
