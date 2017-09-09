@@ -1,8 +1,8 @@
 <manifest package="com.bozhong.qrscandialog"
-
           xmlns:android="http://schemas.android.com/apk/res/android"
     >
 
+    <uses-permission android:name="android.permission.CAMERA"/>
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"

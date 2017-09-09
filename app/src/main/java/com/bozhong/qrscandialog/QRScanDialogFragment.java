@@ -1,17 +1,29 @@
 package com.bozhong.qrscandialog;
 
 import android.Manifest;
+import android.app.Activity;
+import android.content.Context;
+import android.content.Intent;
+import android.graphics.Color;
+import android.graphics.PointF;
+import android.graphics.drawable.ColorDrawable;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.content.PermissionChecker;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Toast;
+import android.view.Window;
+import android.view.WindowManager;
+import android.widget.FrameLayout;
+import android.widget.TextView;
 
 import com.dlazaro66.qrcodereaderview.QRCodeReaderView;
 
@@ -21,27 +33,46 @@ import com.dlazaro66.qrcodereaderview.QRCodeReaderView;
  */
 
 public class QRScanDialogFragment extends DialogFragment {
+    private FrameLayout rootView;
 
     private QRCodeReaderView qrCodeReaderView;
 
-    private QRCodeReaderView.OnQRCodeReadListener callback;
+    private OnQRCodeReaded callback;
 
-    public static void show(@NonNull FragmentManager manage, @Nullable QRCodeReaderView.OnQRCodeReadListener callback) {
+    public static void show(@NonNull FragmentManager manage, @Nullable OnQRCodeReaded callback) {
         QRScanDialogFragment qrScanDialogFragment = new QRScanDialogFragment();
         qrScanDialogFragment.setCallback(callback);
         qrScanDialogFragment.show(manage, "QRScanDialogFragment");
     }
 
-    private void setCallback(QRCodeReaderView.OnQRCodeReadListener callback) {
+    private void setCallback(OnQRCodeReaded callback) {
         this.callback = callback;
     }
+
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setStyle(DialogFragment.STYLE_NO_FRAME, 0);
+    }
+
+    @Override
+    public void onActivityCreated(Bundle savedInstanceState) {
+        //实现全屏
+//        <!--关键点1-->
+        //noinspection ConstantConditions
+        getDialog().getWindow().requestFeature(Window.FEATURE_NO_TITLE);
+        super.onActivityCreated(savedInstanceState);
+//        <!--关键点2-->
+        getDialog().getWindow().setBackgroundDrawable(new ColorDrawable(0x00000000));
+        getDialog().getWindow().setLayout(WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.MATCH_PARENT);
+    }
+
 
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        qrCodeReaderView = new QRCodeReaderView(inflater.getContext());
-        setupCallback();
-        return qrCodeReaderView;
+        rootView = new FrameLayout(inflater.getContext());
+        return rootView;
     }
 
     @Override
@@ -49,16 +80,8 @@ public class QRScanDialogFragment extends DialogFragment {
         super.onViewCreated(view, savedInstanceState);
         if (!hasCameraPermissionGranted()) {
             requestPermissions(new String[]{Manifest.permission.CAMERA}, 2017);
-        }
-    }
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == 2017 && grantResults[0] == PermissionChecker.PERMISSION_GRANTED) {
-            qrCodeReaderView.startCamera();
-        }else{
-            Toast.makeText(getContext(), "扫描二维码需要有相机权限！请在应用设置界面开启权限！", Toast.LENGTH_SHORT).show();
+        } else {
+            setupQRCodeReaderView();
         }
     }
 
@@ -69,25 +92,81 @@ public class QRScanDialogFragment extends DialogFragment {
         return Build.VERSION.SDK_INT < Build.VERSION_CODES.M || PermissionChecker.checkSelfPermission(getContext(), Manifest.permission.CAMERA) == PermissionChecker.PERMISSION_GRANTED;
     }
 
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == 2017 && grantResults[0] == PermissionChecker.PERMISSION_GRANTED) {
+            setupQRCodeReaderView();
+        } else {
+            setupNoPermissionView();
+        }
+    }
+
+    private void setupNoPermissionView() {
+        TextView tvInfo = new TextView(getContext());
+        tvInfo.setBackgroundColor(Color.WHITE);
+        tvInfo.setGravity(Gravity.CENTER);
+        tvInfo.setText("扫描二维码需要有相机权限！\n点击去设置界面开启权限！");
+        tvInfo.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                openAppDetailSettings(getContext());
+            }
+        });
+        rootView.addView(tvInfo);
+    }
+
+    /**
+     * 打开本应用的详情页
+     */
+    public static void openAppDetailSettings(Context context) {
+        Intent i = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+        i.setData(Uri.parse("package:" + context.getPackageName()));
+        if (!(context instanceof Activity)) {
+            i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        }
+        context.startActivity(i);
+    }
 
     private void setupCallback() {
-        qrCodeReaderView.setOnQRCodeReadListener(callback);
+        qrCodeReaderView.setOnQRCodeReadListener(new QRCodeReaderView.OnQRCodeReadListener() {
+            @Override
+            public void onQRCodeRead(String text, PointF[] points) {
+                if (callback != null) {
+                    callback.onQRCodeReaded(QRScanDialogFragment.this, text);
+                }
+            }
+        });
     }
 
     @Override
     public void onResume() {
         super.onResume();
-        if (hasCameraPermissionGranted()) {
+        if (qrCodeReaderView != null) {
             qrCodeReaderView.startCamera();
+        } else if (hasCameraPermissionGranted()) {
+            setupQRCodeReaderView();
         }
+    }
+
+    private void setupQRCodeReaderView() {
+        qrCodeReaderView = new QRCodeReaderView(getContext());
+        rootView.addView(qrCodeReaderView);
+        setupCallback();
+        qrCodeReaderView.startCamera();
     }
 
     @Override
     public void onPause() {
         super.onPause();
-        if (hasCameraPermissionGranted()) {
+        if (qrCodeReaderView != null) {
             qrCodeReaderView.stopCamera();
         }
 
+    }
+
+    @SuppressWarnings("WeakerAccess")
+    public interface OnQRCodeReaded {
+        void onQRCodeReaded(QRScanDialogFragment dialog, String readedText);
     }
 }
