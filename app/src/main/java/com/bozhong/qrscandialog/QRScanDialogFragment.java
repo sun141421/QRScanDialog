@@ -62,8 +62,8 @@ public class QRScanDialogFragment extends DialogFragment {
     public void onActivityCreated(Bundle savedInstanceState) {
         //实现全屏
 //        <!--关键点1-->
-        //noinspection ConstantConditions
-        getDialog().getWindow().requestFeature(Window.FEATURE_NO_TITLE);
+//        noinspection ConstantConditions
+//        getDialog().getWindow().requestFeature(Window.FEATURE_NO_TITLE);
         super.onActivityCreated(savedInstanceState);
 //        <!--关键点2-->
         getDialog().getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
